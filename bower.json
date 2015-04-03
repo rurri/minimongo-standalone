@@ -4,7 +4,7 @@
   "authors": [
     "Rurri"
   ],
-  "description": "Standalone version of Meteor's minimongo database",
+  "description": "Standalone version of Meteor's minimongo database. Automatically fetched and built to latest and packaged for bower",
   "main": "build/minimongo-browser.min.js",
   "keywords": [
     "minimongo",
