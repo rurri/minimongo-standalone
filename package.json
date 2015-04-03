@@ -9,6 +9,10 @@
     "meteor"
   ],
   "homepage": "https://github.com/rurri/minimongo-standalone",
+  "repository" : {
+    "type" : "git",
+    "url" : "https://github.com/rurri/minimongo-standalone.git"
+  },
   "license" : "MIT",
   "author": {
     "name" : "Rurri"

@@ -26,9 +26,13 @@ module.exports = function(grunt) {
 
     browserify: {
       dist: {
-        files: {
-          'minimongo.js': ['meteor-repo/packages/minimongo/**/*.js'],
-        }
+        src: ['meteor-repo/packages/base64/base64.js', 'meteor-repo/packages/ejson/ejson.js', 'helpers/meteor.js', 'meteor-repo/packages/minimongo/id_map.js',
+          'meteor-repo/packages/minimongo/minimongo.js', 'meteor-repo/packages/minimongo/sort.js',
+          'meteor-repo/packages/minimongo/**/*.js',
+          '!meteor-repo/packages/minimongo/*_tests.js', '!meteor-repo/packages/minimongo/package.js'],
+        dest: 'minimongo.js',
+        exclude : ['meteor-repo/packages/minimongo/*_tests.js'],
+        ignore : ['meteor-repo/packages/minimongo/*_tests.js']
       }
     },
 
