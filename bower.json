@@ -1,0 +1,26 @@
+{
+  "name": "minimongo-standalone",
+  "version": "0.0.1",
+  "authors": [
+    "Rurri"
+  ],
+  "description": "Standalone version of Meteor's minimongo database",
+  "main": "build/minimongo-browser.min.js",
+  "keywords": [
+    "minimongo",
+    "minimongodb",
+    "database",
+    "meteor"
+  ],
+  "license": "MIT",
+  "homepage": "https://github.com/rurri/minimongo-standalone",
+  "ignore": [
+    "**/.*",
+    "package.json",
+    "node_modules",
+    "meteor-repo",
+    "bower_components",
+    "test",
+    "tests"
+  ]
+}
