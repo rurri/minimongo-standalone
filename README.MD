@@ -1,11 +1,11 @@
-#Mongodb-Standalone
+#Minimongo-Standalone
 Minimongo javascript code released as part of Meteor version:**1.1.0.1**
 
 2 Files are generated automatically from these grunt scripts:
 * minimongo.js - Standalone version of minimongo suitable for use on servers (or browsers during debug if size is not an issue)
 * minimongo.min.js - The above file but minified for use in browsers
 
-*Note: Only **one** of these two files should be imported, not both.*
+*Note: Only one of these two files should be imported, not both.*
 
 ##Bower Install
 To install via bower run
@@ -14,6 +14,14 @@ To install via bower run
 ##NPM Install
 To install via npm run
 `npm install mongodb-standalone --save-`
+
+##Manual Download##
+You could also just download the minimongo.min.js, place it on your server, and reference it in your source.
+
+For browsers
+`<script src="/js/minimongo.min.js"></script>`
+For servers
+`require('./minimongo.min.js');`
 
 ##Grunt scripts
 This repo contains grunt scripts suitable for fetching and building the latest mongodb source files and packaging them up for consumption via npm and bower.
