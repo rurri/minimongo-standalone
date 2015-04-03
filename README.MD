@@ -42,7 +42,8 @@ This will fetch the latest code and create two files in the root folder:
 * minimongo.js
 * minimongo.min.js
 
-Other helpful commands
+Other helpful commands:
+
 |Command|Result|
 ----------------
 |grunt install|Performs just initial clone of meteor and checkouts appropriate tag for target release|
