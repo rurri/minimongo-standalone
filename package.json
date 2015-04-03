@@ -1,6 +1,21 @@
 {
   "name": "minimongo-standalone",
+  "description": "Standalone version of Meteor's minimongo database. Automatically fetched and built to latest and packaged for npm",
   "version": "0.0.1",
+  "keywords": [
+    "minimongo",
+    "minimongodb",
+    "database",
+    "meteor"
+  ],
+  "homepage": "https://github.com/rurri/minimongo-standalone",
+  "license" : "MIT",
+  "author": {
+    "name" : "Rurri"
+  },
+  "files": [
+    "minimongo.js"
+  ],
   "devDependencies": {
     "grunt": "~0.4.5",
     "grunt-browserify": "^3.6.0",
