@@ -7,7 +7,7 @@ To install via bower run
 
 ##NPM Install
 To install via npm run
-`npm install minimongo-standalone --save-`
+`npm install minimongo-standalone --save`
 
 ##Manual Download##
 You could also just download the minimongo.min.js, place it on your server, and reference it in your source.
