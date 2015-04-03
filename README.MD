@@ -45,7 +45,7 @@ This will fetch the latest code and create two files in the root folder:
 Other helpful commands:
 
 |Command|Result|
-----------------
+|-------|--------|
 |grunt install|Performs just initial clone of meteor and checkouts appropriate tag for target release|
 |grunt fetch|Performs just a fetch of meteor and checkouts appropriate tag for target release|
 |grunt build|Assumes meteor is at appropriate version, and performs just build tasks (browserify/uglify)|
