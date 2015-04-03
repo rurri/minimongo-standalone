@@ -17,6 +17,8 @@
   "ignore": [
     "**/.*",
     "package.json",
+    "Gruntfile.js",
+    "README.MD",
     "node_modules",
     "meteor-repo",
     "bower_components",
