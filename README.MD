@@ -56,3 +56,7 @@ Other helpful commands:
 |grunt fetch|Performs just a fetch of meteor and checkouts appropriate tag for target release|
 |grunt build|Assumes meteor is at appropriate version, and performs just build tasks (browserify/uglify)|
 |grunt clean|Cleans up any files that can be rebuilt|
+
+##TODO
+* This re-package passes basic manual testing, but more tests should be written
+* File lists of required meteor js files are hardcoded, would be nice to look at package manifests, and to dynamically generate this file list in case file dependencies are added later.
