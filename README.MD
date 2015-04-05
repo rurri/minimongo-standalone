@@ -1,6 +1,12 @@
 #Minimongo-Standalone
 Minimongo javascript code released as part of Meteor version:**1.1.0.1**
 
+##Requirements
+bower install underscore
+bower install async
+
+*There are not yet part of the manifests*
+
 ##Bower Install
 To install via bower run
 `bower install minimongo-standalone`

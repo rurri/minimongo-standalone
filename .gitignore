@@ -2,3 +2,4 @@
 .idea
 meteor-repo
 node_modules
+npm-debug.log
