@@ -1273,6 +1273,195 @@ _.extend(IdMap.prototype, {
     }
 });
 
+// This file defines an ordered dictionary abstraction that is useful for
+// maintaining a dataset backed by observeChanges.  It supports ordering items
+// by specifying the item they now come before.
+// The implementation is a dictionary that contains nodes of a doubly-linked
+// list as its values.
+// constructs a new element struct
+// next and prev are whole elements, not keys.
+var element = function(key, value, next, prev) {
+    return {
+        key: key,
+        value: value,
+        next: next,
+        prev: prev
+    };
+};
+
+OrderedDict = function() {
+    var self = this;
+    self._dict = {};
+    self._first = null;
+    self._last = null;
+    self._size = 0;
+    var args = _.toArray(arguments);
+    self._stringify = function(x) {
+        return x;
+    };
+    if (typeof args[0] === "function") self._stringify = args.shift();
+    _.each(args, function(kv) {
+        self.putBefore(kv[0], kv[1], null);
+    });
+};
+
+_.extend(OrderedDict.prototype, {
+    // the "prefix keys with a space" thing comes from here
+    // https://github.com/documentcloud/underscore/issues/376#issuecomment-2815649
+    _k: function(key) {
+        return " " + this._stringify(key);
+    },
+    empty: function() {
+        var self = this;
+        return !self._first;
+    },
+    size: function() {
+        var self = this;
+        return self._size;
+    },
+    _linkEltIn: function(elt) {
+        var self = this;
+        if (!elt.next) {
+            elt.prev = self._last;
+            if (self._last) self._last.next = elt;
+            self._last = elt;
+        } else {
+            elt.prev = elt.next.prev;
+            elt.next.prev = elt;
+            if (elt.prev) elt.prev.next = elt;
+        }
+        if (self._first === null || self._first === elt.next) self._first = elt;
+    },
+    _linkEltOut: function(elt) {
+        var self = this;
+        if (elt.next) elt.next.prev = elt.prev;
+        if (elt.prev) elt.prev.next = elt.next;
+        if (elt === self._last) self._last = elt.prev;
+        if (elt === self._first) self._first = elt.next;
+    },
+    putBefore: function(key, item, before) {
+        var self = this;
+        if (self._dict[self._k(key)]) throw new Error("Item " + key + " already present in OrderedDict");
+        var elt = before ? element(key, item, self._dict[self._k(before)]) : element(key, item, null);
+        if (elt.next === undefined) throw new Error("could not find item to put this one before");
+        self._linkEltIn(elt);
+        self._dict[self._k(key)] = elt;
+        self._size++;
+    },
+    append: function(key, item) {
+        var self = this;
+        self.putBefore(key, item, null);
+    },
+    remove: function(key) {
+        var self = this;
+        var elt = self._dict[self._k(key)];
+        if (elt === undefined) throw new Error("Item " + key + " not present in OrderedDict");
+        self._linkEltOut(elt);
+        self._size--;
+        delete self._dict[self._k(key)];
+        return elt.value;
+    },
+    get: function(key) {
+        var self = this;
+        if (self.has(key)) return self._dict[self._k(key)].value;
+        return undefined;
+    },
+    has: function(key) {
+        var self = this;
+        return _.has(self._dict, self._k(key));
+    },
+    // Iterate through the items in this dictionary in order, calling
+    // iter(value, key, index) on each one.
+    // Stops whenever iter returns OrderedDict.BREAK, or after the last element.
+    forEach: function(iter) {
+        var self = this;
+        var i = 0;
+        var elt = self._first;
+        while (elt !== null) {
+            var b = iter(elt.value, elt.key, i);
+            if (b === OrderedDict.BREAK) return;
+            elt = elt.next;
+            i++;
+        }
+    },
+    first: function() {
+        var self = this;
+        if (self.empty()) return undefined;
+        return self._first.key;
+    },
+    firstValue: function() {
+        var self = this;
+        if (self.empty()) return undefined;
+        return self._first.value;
+    },
+    last: function() {
+        var self = this;
+        if (self.empty()) return undefined;
+        return self._last.key;
+    },
+    lastValue: function() {
+        var self = this;
+        if (self.empty()) return undefined;
+        return self._last.value;
+    },
+    prev: function(key) {
+        var self = this;
+        if (self.has(key)) {
+            var elt = self._dict[self._k(key)];
+            if (elt.prev) return elt.prev.key;
+        }
+        return null;
+    },
+    next: function(key) {
+        var self = this;
+        if (self.has(key)) {
+            var elt = self._dict[self._k(key)];
+            if (elt.next) return elt.next.key;
+        }
+        return null;
+    },
+    moveBefore: function(key, before) {
+        var self = this;
+        var elt = self._dict[self._k(key)];
+        var eltBefore = before ? self._dict[self._k(before)] : null;
+        if (elt === undefined) throw new Error("Item to move is not present");
+        if (eltBefore === undefined) {
+            throw new Error("Could not find element to move this one before");
+        }
+        if (eltBefore === elt.next) // no moving necessary
+        return;
+        // remove from its old place
+        self._linkEltOut(elt);
+        // patch into its new place
+        elt.next = eltBefore;
+        self._linkEltIn(elt);
+    },
+    // Linear, sadly.
+    indexOf: function(key) {
+        var self = this;
+        var ret = null;
+        self.forEach(function(v, k, i) {
+            if (self._k(k) === self._k(key)) {
+                ret = i;
+                return OrderedDict.BREAK;
+            }
+            return undefined;
+        });
+        return ret;
+    },
+    _checkRep: function() {
+        var self = this;
+        _.each(self._dict, function(k, v) {
+            if (v.next === v) throw new Error("Next is a loop");
+            if (v.prev === v) throw new Error("Prev is a loop");
+        });
+    }
+});
+
+OrderedDict.BREAK = {
+    "break": true
+};
+
 /////////////////////////////////////////////////////
 // Package docs at http://docs.meteor.com/#tracker //
 /////////////////////////////////////////////////////
@@ -1809,6 +1998,27 @@ Tracker.afterFlush = function(f) {
     requireFlush();
 };
 
+// Deprecated functions.
+// These functions used to be on the Meteor object (and worked slightly
+// differently).
+// XXX COMPAT WITH 0.5.7
+Meteor.flush = Tracker.flush;
+
+Meteor.autorun = Tracker.autorun;
+
+// We used to require a special "autosubscribe" call to reactively subscribe to
+// things. Now, it works with autorun.
+// XXX COMPAT WITH 0.5.4
+Meteor.autosubscribe = Tracker.autorun;
+
+// This Tracker API briefly existed in 0.5.8 and 0.5.9
+// XXX COMPAT WITH 0.5.9
+Tracker.depend = function(d) {
+    return d.depend();
+};
+
+Deps = Tracker;
+
 // We use cryptographically strong PRNGs (crypto.getRandomBytes() on the server,
 // window.crypto.getRandomValues() in the browser) when available. If these
 // PRNGs fail, we fall back to the Alea PRNG, which is not cryptographically
@@ -1989,6 +2199,327 @@ Random.createWithSeeds = function() {
     }
     return new RandomGenerator(arguments);
 };
+
+// Define an object named exports. This will cause geojson-utils.js to put `gju`
+// as a field on it, instead of in the global namespace.  See also post.js.
+module = {
+    exports: {}
+};
+
+(function() {
+    var gju = {};
+    // Export the geojson object for **CommonJS**
+    if (typeof module !== "undefined" && module.exports) {
+        module.exports = gju;
+    }
+    // adapted from http://www.kevlindev.com/gui/math/intersection/Intersection.js
+    gju.lineStringsIntersect = function(l1, l2) {
+        var intersects = [];
+        for (var i = 0; i <= l1.coordinates.length - 2; ++i) {
+            for (var j = 0; j <= l2.coordinates.length - 2; ++j) {
+                var a1 = {
+                    x: l1.coordinates[i][1],
+                    y: l1.coordinates[i][0]
+                }, a2 = {
+                    x: l1.coordinates[i + 1][1],
+                    y: l1.coordinates[i + 1][0]
+                }, b1 = {
+                    x: l2.coordinates[j][1],
+                    y: l2.coordinates[j][0]
+                }, b2 = {
+                    x: l2.coordinates[j + 1][1],
+                    y: l2.coordinates[j + 1][0]
+                }, ua_t = (b2.x - b1.x) * (a1.y - b1.y) - (b2.y - b1.y) * (a1.x - b1.x), ub_t = (a2.x - a1.x) * (a1.y - b1.y) - (a2.y - a1.y) * (a1.x - b1.x), u_b = (b2.y - b1.y) * (a2.x - a1.x) - (b2.x - b1.x) * (a2.y - a1.y);
+                if (u_b != 0) {
+                    var ua = ua_t / u_b, ub = ub_t / u_b;
+                    if (0 <= ua && ua <= 1 && 0 <= ub && ub <= 1) {
+                        intersects.push({
+                            type: "Point",
+                            coordinates: [ a1.x + ua * (a2.x - a1.x), a1.y + ua * (a2.y - a1.y) ]
+                        });
+                    }
+                }
+            }
+        }
+        if (intersects.length == 0) intersects = false;
+        return intersects;
+    };
+    // Bounding Box
+    function boundingBoxAroundPolyCoords(coords) {
+        var xAll = [], yAll = [];
+        for (var i = 0; i < coords[0].length; i++) {
+            xAll.push(coords[0][i][1]);
+            yAll.push(coords[0][i][0]);
+        }
+        xAll = xAll.sort(function(a, b) {
+            return a - b;
+        });
+        yAll = yAll.sort(function(a, b) {
+            return a - b;
+        });
+        return [ [ xAll[0], yAll[0] ], [ xAll[xAll.length - 1], yAll[yAll.length - 1] ] ];
+    }
+    gju.pointInBoundingBox = function(point, bounds) {
+        return !(point.coordinates[1] < bounds[0][0] || point.coordinates[1] > bounds[1][0] || point.coordinates[0] < bounds[0][1] || point.coordinates[0] > bounds[1][1]);
+    };
+    // Point in Polygon
+    // http://www.ecse.rpi.edu/Homepages/wrf/Research/Short_Notes/pnpoly.html#Listing the Vertices
+    function pnpoly(x, y, coords) {
+        var vert = [ [ 0, 0 ] ];
+        for (var i = 0; i < coords.length; i++) {
+            for (var j = 0; j < coords[i].length; j++) {
+                vert.push(coords[i][j]);
+            }
+            vert.push([ 0, 0 ]);
+        }
+        var inside = false;
+        for (var i = 0, j = vert.length - 1; i < vert.length; j = i++) {
+            if (vert[i][0] > y != vert[j][0] > y && x < (vert[j][1] - vert[i][1]) * (y - vert[i][0]) / (vert[j][0] - vert[i][0]) + vert[i][1]) inside = !inside;
+        }
+        return inside;
+    }
+    gju.pointInPolygon = function(p, poly) {
+        var coords = poly.type == "Polygon" ? [ poly.coordinates ] : poly.coordinates;
+        var insideBox = false;
+        for (var i = 0; i < coords.length; i++) {
+            if (gju.pointInBoundingBox(p, boundingBoxAroundPolyCoords(coords[i]))) insideBox = true;
+        }
+        if (!insideBox) return false;
+        var insidePoly = false;
+        for (var i = 0; i < coords.length; i++) {
+            if (pnpoly(p.coordinates[1], p.coordinates[0], coords[i])) insidePoly = true;
+        }
+        return insidePoly;
+    };
+    gju.numberToRadius = function(number) {
+        return number * Math.PI / 180;
+    };
+    gju.numberToDegree = function(number) {
+        return number * 180 / Math.PI;
+    };
+    // written with help from @tautologe
+    gju.drawCircle = function(radiusInMeters, centerPoint, steps) {
+        var center = [ centerPoint.coordinates[1], centerPoint.coordinates[0] ], dist = radiusInMeters / 1e3 / 6371, // convert meters to radiant
+        radCenter = [ gju.numberToRadius(center[0]), gju.numberToRadius(center[1]) ], steps = steps || 15, // 15 sided circle
+        poly = [ [ center[0], center[1] ] ];
+        for (var i = 0; i < steps; i++) {
+            var brng = 2 * Math.PI * i / steps;
+            var lat = Math.asin(Math.sin(radCenter[0]) * Math.cos(dist) + Math.cos(radCenter[0]) * Math.sin(dist) * Math.cos(brng));
+            var lng = radCenter[1] + Math.atan2(Math.sin(brng) * Math.sin(dist) * Math.cos(radCenter[0]), Math.cos(dist) - Math.sin(radCenter[0]) * Math.sin(lat));
+            poly[i] = [];
+            poly[i][1] = gju.numberToDegree(lat);
+            poly[i][0] = gju.numberToDegree(lng);
+        }
+        return {
+            type: "Polygon",
+            coordinates: [ poly ]
+        };
+    };
+    // assumes rectangle starts at lower left point
+    gju.rectangleCentroid = function(rectangle) {
+        var bbox = rectangle.coordinates[0];
+        var xmin = bbox[0][0], ymin = bbox[0][1], xmax = bbox[2][0], ymax = bbox[2][1];
+        var xwidth = xmax - xmin;
+        var ywidth = ymax - ymin;
+        return {
+            type: "Point",
+            coordinates: [ xmin + xwidth / 2, ymin + ywidth / 2 ]
+        };
+    };
+    // from http://www.movable-type.co.uk/scripts/latlong.html
+    gju.pointDistance = function(pt1, pt2) {
+        var lon1 = pt1.coordinates[0], lat1 = pt1.coordinates[1], lon2 = pt2.coordinates[0], lat2 = pt2.coordinates[1], dLat = gju.numberToRadius(lat2 - lat1), dLon = gju.numberToRadius(lon2 - lon1), a = Math.pow(Math.sin(dLat / 2), 2) + Math.cos(gju.numberToRadius(lat1)) * Math.cos(gju.numberToRadius(lat2)) * Math.pow(Math.sin(dLon / 2), 2), c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+        // Earth radius is 6371 km
+        return 6371 * c * 1e3;
+    }, // checks if geometry lies entirely within a circle
+    // works with Point, LineString, Polygon
+    gju.geometryWithinRadius = function(geometry, center, radius) {
+        if (geometry.type == "Point") {
+            return gju.pointDistance(geometry, center) <= radius;
+        } else if (geometry.type == "LineString" || geometry.type == "Polygon") {
+            var point = {};
+            var coordinates;
+            if (geometry.type == "Polygon") {
+                // it's enough to check the exterior ring of the Polygon
+                coordinates = geometry.coordinates[0];
+            } else {
+                coordinates = geometry.coordinates;
+            }
+            for (var i in coordinates) {
+                point.coordinates = coordinates[i];
+                if (gju.pointDistance(point, center) > radius) {
+                    return false;
+                }
+            }
+        }
+        return true;
+    };
+    // adapted from http://paulbourke.net/geometry/polyarea/javascript.txt
+    gju.area = function(polygon) {
+        var area = 0;
+        // TODO: polygon holes at coordinates[1]
+        var points = polygon.coordinates[0];
+        var j = points.length - 1;
+        var p1, p2;
+        for (var i = 0; i < points.length; j = i++) {
+            var p1 = {
+                x: points[i][1],
+                y: points[i][0]
+            };
+            var p2 = {
+                x: points[j][1],
+                y: points[j][0]
+            };
+            area += p1.x * p2.y;
+            area -= p1.y * p2.x;
+        }
+        area /= 2;
+        return area;
+    }, // adapted from http://paulbourke.net/geometry/polyarea/javascript.txt
+    gju.centroid = function(polygon) {
+        var f, x = 0, y = 0;
+        // TODO: polygon holes at coordinates[1]
+        var points = polygon.coordinates[0];
+        var j = points.length - 1;
+        var p1, p2;
+        for (var i = 0; i < points.length; j = i++) {
+            var p1 = {
+                x: points[i][1],
+                y: points[i][0]
+            };
+            var p2 = {
+                x: points[j][1],
+                y: points[j][0]
+            };
+            f = p1.x * p2.y - p2.x * p1.y;
+            x += (p1.x + p2.x) * f;
+            y += (p1.y + p2.y) * f;
+        }
+        f = gju.area(polygon) * 6;
+        return {
+            type: "Point",
+            coordinates: [ y / f, x / f ]
+        };
+    }, gju.simplify = function(source, kink) {
+        /* source[] array of geojson points */
+        /* kink	in metres, kinks above this depth kept  */
+        /* kink depth is the height of the triangle abc where a-b and b-c are two consecutive line segments */
+        kink = kink || 20;
+        source = source.map(function(o) {
+            return {
+                lng: o.coordinates[0],
+                lat: o.coordinates[1]
+            };
+        });
+        var n_source, n_stack, n_dest, start, end, i, sig;
+        var dev_sqr, max_dev_sqr, band_sqr;
+        var x12, y12, d12, x13, y13, d13, x23, y23, d23;
+        var F = Math.PI / 180 * .5;
+        var index = new Array();
+        /* aray of indexes of source points to include in the reduced line */
+        var sig_start = new Array();
+        /* indices of start & end of working section */
+        var sig_end = new Array();
+        /* check for simple cases */
+        if (source.length < 3) return source;
+        /* one or two points */
+        /* more complex case. initialize stack */
+        n_source = source.length;
+        band_sqr = kink * 360 / (2 * Math.PI * 6378137);
+        /* Now in degrees */
+        band_sqr *= band_sqr;
+        n_dest = 0;
+        sig_start[0] = 0;
+        sig_end[0] = n_source - 1;
+        n_stack = 1;
+        /* while the stack is not empty  ... */
+        while (n_stack > 0) {
+            /* ... pop the top-most entries off the stacks */
+            start = sig_start[n_stack - 1];
+            end = sig_end[n_stack - 1];
+            n_stack--;
+            if (end - start > 1) {
+                /* any intermediate points ? */
+                /* ... yes, so find most deviant intermediate point to
+        either side of line joining start & end points */
+                x12 = source[end].lng() - source[start].lng();
+                y12 = source[end].lat() - source[start].lat();
+                if (Math.abs(x12) > 180) x12 = 360 - Math.abs(x12);
+                x12 *= Math.cos(F * (source[end].lat() + source[start].lat()));
+                /* use avg lat to reduce lng */
+                d12 = x12 * x12 + y12 * y12;
+                for (i = start + 1, sig = start, max_dev_sqr = -1; i < end; i++) {
+                    x13 = source[i].lng() - source[start].lng();
+                    y13 = source[i].lat() - source[start].lat();
+                    if (Math.abs(x13) > 180) x13 = 360 - Math.abs(x13);
+                    x13 *= Math.cos(F * (source[i].lat() + source[start].lat()));
+                    d13 = x13 * x13 + y13 * y13;
+                    x23 = source[i].lng() - source[end].lng();
+                    y23 = source[i].lat() - source[end].lat();
+                    if (Math.abs(x23) > 180) x23 = 360 - Math.abs(x23);
+                    x23 *= Math.cos(F * (source[i].lat() + source[end].lat()));
+                    d23 = x23 * x23 + y23 * y23;
+                    if (d13 >= d12 + d23) dev_sqr = d23; else if (d23 >= d12 + d13) dev_sqr = d13; else dev_sqr = (x13 * y12 - y13 * x12) * (x13 * y12 - y13 * x12) / d12;
+                    // solve triangle
+                    if (dev_sqr > max_dev_sqr) {
+                        sig = i;
+                        max_dev_sqr = dev_sqr;
+                    }
+                }
+                if (max_dev_sqr < band_sqr) {
+                    /* is there a sig. intermediate point ? */
+                    /* ... no, so transfer current start point */
+                    index[n_dest] = start;
+                    n_dest++;
+                } else {
+                    /* ... yes, so push two sub-sections on stack for further processing */
+                    n_stack++;
+                    sig_start[n_stack - 1] = sig;
+                    sig_end[n_stack - 1] = end;
+                    n_stack++;
+                    sig_start[n_stack - 1] = start;
+                    sig_end[n_stack - 1] = sig;
+                }
+            } else {
+                /* ... no intermediate points, so transfer current start point */
+                index[n_dest] = start;
+                n_dest++;
+            }
+        }
+        /* transfer last point */
+        index[n_dest] = n_source - 1;
+        n_dest++;
+        /* make return array */
+        var r = new Array();
+        for (var i = 0; i < n_dest; i++) r.push(source[index[i]]);
+        return r.map(function(o) {
+            return {
+                type: "Point",
+                coordinates: [ o.lng, o.lat ]
+            };
+        });
+    };
+    // http://www.movable-type.co.uk/scripts/latlong.html#destPoint
+    gju.destinationPoint = function(pt, brng, dist) {
+        dist = dist / 6371;
+        // convert dist to angular distance in radians
+        brng = gju.numberToRadius(brng);
+        var lat1 = gju.numberToRadius(pt.coordinates[0]);
+        var lon1 = gju.numberToRadius(pt.coordinates[1]);
+        var lat2 = Math.asin(Math.sin(lat1) * Math.cos(dist) + Math.cos(lat1) * Math.sin(dist) * Math.cos(brng));
+        var lon2 = lon1 + Math.atan2(Math.sin(brng) * Math.sin(dist) * Math.cos(lat1), Math.cos(dist) - Math.sin(lat1) * Math.sin(lat2));
+        lon2 = (lon2 + 3 * Math.PI) % (2 * Math.PI) - Math.PI;
+        // normalise to -180..+180º
+        return {
+            type: "Point",
+            coordinates: [ gju.numberToDegree(lat2), gju.numberToDegree(lon2) ]
+        };
+    };
+})();
+
+// This exports object was created in pre.js.  Now copy the `exports` object
+// from it into the package-scope variable `GeoJSON`, which will get exported.
+GeoJSON = module.exports;
 
 // XXX type checking on selectors (graceful error if malformed)
 // LocalCollection: a set of documents that supports queries and modifiers.
@@ -5333,6 +5864,245 @@ Meteor.bindEnvironment = function(func, onException, _this) {
 };
 
 Meteor._nodeCodeMustBeInFiber = function() {};
+
+/*
+ * ## [new] ReactiveVar(initialValue, [equalsFunc])
+ *
+ * A ReactiveVar holds a single value that can be get and set,
+ * such that calling `set` will invalidate any Computations that
+ * called `get`, according to the usual contract for reactive
+ * data sources.
+ *
+ * A ReactiveVar is much like a Session variable -- compare `foo.get()`
+ * to `Session.get("foo")` -- but it doesn't have a global name and isn't
+ * automatically migrated across hot code pushes.  Also, while Session
+ * variables can only hold JSON or EJSON, ReactiveVars can hold any value.
+ *
+ * An important property of ReactiveVars, which is sometimes the reason
+ * to use one, is that setting the value to the same value as before has
+ * no effect, meaning ReactiveVars can be used to absorb extra
+ * invalidations that wouldn't serve a purpose.  However, by default,
+ * ReactiveVars are extremely conservative about what changes they
+ * absorb.  Calling `set` with an object argument will *always* trigger
+ * invalidations, because even if the new value is `===` the old value,
+ * the object may have been mutated.  You can change the default behavior
+ * by passing a function of two arguments, `oldValue` and `newValue`,
+ * to the constructor as `equalsFunc`.
+ *
+ * This class is extremely basic right now, but the idea is to evolve
+ * it into the ReactiveVar of Geoff's Lickable Forms proposal.
+ */
+/**
+ * @class 
+ * @instanceName reactiveVar
+ * @summary Constructor for a ReactiveVar, which represents a single reactive variable.
+ * @locus Client
+ * @param {Any} initialValue The initial value to set.  `equalsFunc` is ignored when setting the initial value.
+ * @param {Function} [equalsFunc] Optional.  A function of two arguments, called on the old value and the new value whenever the ReactiveVar is set.  If it returns true, no set is performed.  If omitted, the default `equalsFunc` returns true if its arguments are `===` and are of type number, boolean, string, undefined, or null.
+ */
+ReactiveVar = function(initialValue, equalsFunc) {
+    if (!(this instanceof ReactiveVar)) // called without `new`
+    return new ReactiveVar(initialValue, equalsFunc);
+    this.curValue = initialValue;
+    this.equalsFunc = equalsFunc;
+    this.dep = new Tracker.Dependency();
+};
+
+ReactiveVar._isEqual = function(oldValue, newValue) {
+    var a = oldValue, b = newValue;
+    // Two values are "equal" here if they are `===` and are
+    // number, boolean, string, undefined, or null.
+    if (a !== b) return false; else return !a || typeof a === "number" || typeof a === "boolean" || typeof a === "string";
+};
+
+/**
+ * @summary Returns the current value of the ReactiveVar, establishing a reactive dependency.
+ * @locus Client
+ */
+ReactiveVar.prototype.get = function() {
+    if (Tracker.active) this.dep.depend();
+    return this.curValue;
+};
+
+/**
+ * @summary Sets the current value of the ReactiveVar, invalidating the Computations that called `get` if `newValue` is different from the old value.
+ * @locus Client
+ * @param {Any} newValue
+ */
+ReactiveVar.prototype.set = function(newValue) {
+    var oldValue = this.curValue;
+    if ((this.equalsFunc || ReactiveVar._isEqual)(oldValue, newValue)) // value is same as last time
+    return;
+    this.curValue = newValue;
+    this.dep.changed();
+};
+
+ReactiveVar.prototype.toString = function() {
+    return "ReactiveVar{" + this.get() + "}";
+};
+
+ReactiveVar.prototype._numListeners = function() {
+    // Tests want to know.
+    // Accesses a private field of Tracker.Dependency.
+    var count = 0;
+    for (var id in this.dep._dependentsById) count++;
+    return count;
+};
+
+// XXX come up with a serialization method which canonicalizes object key
+// order, which would allow us to use objects as values for equals.
+var stringify = function(value) {
+    if (value === undefined) return "undefined";
+    return EJSON.stringify(value);
+};
+
+var parse = function(serialized) {
+    if (serialized === undefined || serialized === "undefined") return undefined;
+    return EJSON.parse(serialized);
+};
+
+var changed = function(v) {
+    v && v.changed();
+};
+
+// XXX COMPAT WITH 0.9.1 : accept migrationData instead of dictName
+ReactiveDict = function(dictName) {
+    // this.keys: key -> value
+    if (dictName) {
+        if (typeof dictName === "string") {
+            // the normal case, argument is a string name.
+            // _registerDictForMigrate will throw an error on duplicate name.
+            ReactiveDict._registerDictForMigrate(dictName, this);
+            this.keys = ReactiveDict._loadMigratedDict(dictName) || {};
+        } else if (typeof dictName === "object") {
+            // back-compat case: dictName is actually migrationData
+            this.keys = dictName;
+        } else {
+            throw new Error("Invalid ReactiveDict argument: " + dictName);
+        }
+    } else {
+        // no name given; no migration will be performed
+        this.keys = {};
+    }
+    this.allDeps = new Tracker.Dependency();
+    this.keyDeps = {};
+    // key -> Dependency
+    this.keyValueDeps = {};
+};
+
+_.extend(ReactiveDict.prototype, {
+    // set() began as a key/value method, but we are now overloading it
+    // to take an object of key/value pairs, similar to backbone
+    // http://backbonejs.org/#Model-set
+    set: function(keyOrObject, value) {
+        var self = this;
+        if (typeof keyOrObject === "object" && value === undefined) {
+            self._setObject(keyOrObject);
+            return;
+        }
+        // the input isn't an object, so it must be a key
+        // and we resume with the rest of the function
+        var key = keyOrObject;
+        value = stringify(value);
+        var oldSerializedValue = "undefined";
+        if (_.has(self.keys, key)) oldSerializedValue = self.keys[key];
+        if (value === oldSerializedValue) return;
+        self.keys[key] = value;
+        self.allDeps.changed();
+        changed(self.keyDeps[key]);
+        if (self.keyValueDeps[key]) {
+            changed(self.keyValueDeps[key][oldSerializedValue]);
+            changed(self.keyValueDeps[key][value]);
+        }
+    },
+    setDefault: function(key, value) {
+        var self = this;
+        // for now, explicitly check for undefined, since there is no
+        // ReactiveDict.clear().  Later we might have a ReactiveDict.clear(), in which case
+        // we should check if it has the key.
+        if (self.keys[key] === undefined) {
+            self.set(key, value);
+        }
+    },
+    get: function(key) {
+        var self = this;
+        self._ensureKey(key);
+        self.keyDeps[key].depend();
+        return parse(self.keys[key]);
+    },
+    equals: function(key, value) {
+        var self = this;
+        // Mongo.ObjectID is in the 'mongo' package
+        var ObjectID = null;
+        if (typeof Mongo !== "undefined") {
+            ObjectID = Mongo.ObjectID;
+        }
+        // We don't allow objects (or arrays that might include objects) for
+        // .equals, because JSON.stringify doesn't canonicalize object key
+        // order. (We can make equals have the right return value by parsing the
+        // current value and using EJSON.equals, but we won't have a canonical
+        // element of keyValueDeps[key] to store the dependency.) You can still use
+        // "EJSON.equals(reactiveDict.get(key), value)".
+        //
+        // XXX we could allow arrays as long as we recursively check that there
+        // are no objects
+        if (typeof value !== "string" && typeof value !== "number" && typeof value !== "boolean" && typeof value !== "undefined" && !(value instanceof Date) && !(ObjectID && value instanceof ObjectID) && value !== null) throw new Error("ReactiveDict.equals: value must be scalar");
+        var serializedValue = stringify(value);
+        if (Tracker.active) {
+            self._ensureKey(key);
+            if (!_.has(self.keyValueDeps[key], serializedValue)) self.keyValueDeps[key][serializedValue] = new Tracker.Dependency();
+            var isNew = self.keyValueDeps[key][serializedValue].depend();
+            if (isNew) {
+                Tracker.onInvalidate(function() {
+                    // clean up [key][serializedValue] if it's now empty, so we don't
+                    // use O(n) memory for n = values seen ever
+                    if (!self.keyValueDeps[key][serializedValue].hasDependents()) delete self.keyValueDeps[key][serializedValue];
+                });
+            }
+        }
+        var oldValue = undefined;
+        if (_.has(self.keys, key)) oldValue = parse(self.keys[key]);
+        return EJSON.equals(oldValue, value);
+    },
+    all: function() {
+        this.allDeps.depend();
+        var ret = {};
+        _.each(this.keys, function(value, key) {
+            ret[key] = parse(value);
+        });
+        return ret;
+    },
+    clear: function() {
+        var self = this;
+        var oldKeys = self.keys;
+        self.keys = {};
+        self.allDeps.changed();
+        _.each(oldKeys, function(value, key) {
+            changed(self.keyDeps[key]);
+            changed(self.keyValueDeps[key][value]);
+            changed(self.keyValueDeps[key]["undefined"]);
+        });
+    },
+    _setObject: function(object) {
+        var self = this;
+        _.each(object, function(value, key) {
+            self.set(key, value);
+        });
+    },
+    _ensureKey: function(key) {
+        var self = this;
+        if (!(key in self.keyDeps)) {
+            self.keyDeps[key] = new Tracker.Dependency();
+            self.keyValueDeps[key] = {};
+        }
+    },
+    // Get a JSON value that can be passed to the constructor to
+    // create a new ReactiveDict with the same contents as this one
+    _getMigrationData: function() {
+        // XXX sanitize and make sure it's JSONible?
+        return this.keys;
+    }
+});
 
 var Future;
 

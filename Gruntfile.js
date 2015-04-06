@@ -23,11 +23,16 @@ module.exports = function(grunt) {
 
     'meteor-repo/packages/id-map/id-map.js',
 
-    'meteor-repo/packages/ordered-dict/ordered-dict.js',
+    'meteor-repo/packages/ordered-dict/ordered_dict.js',
 
     'meteor-repo/packages/tracker/tracker.js',
+    'meteor-repo/packages/tracker/deprecated.js',
 
     'meteor-repo/packages/random/random.js',
+
+    'meteor-repo/packages/geojson-utils/pre.js',
+    'meteor-repo/packages/geojson-utils/geojson-utils.js',
+    'meteor-repo/packages/geojson-utils/post.js',
 
     'meteor-repo/packages/minimongo/minimongo.js',
     'meteor-repo/packages/minimongo/wrap_transform.js',
@@ -42,6 +47,9 @@ module.exports = function(grunt) {
     'meteor-repo/packages/minimongo/objectid.js',
 
     'meteor-repo/packages/meteor/dynamics_browser.js',
+
+    'meteor-repo/packages/reactive-var/reactive-var.js',
+    'meteor-repo/packages/reactive-dict/reactive-dict.js',
 
     'meteor-repo/packages/tinytest/tinytest.js',
     'meteor-repo/packages/tinytest/tinytest_client.js',
