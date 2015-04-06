@@ -12,8 +12,6 @@ module.exports = function(grunt) {
     'meteor-repo/packages/meteor/fiber_stubs_client.js',
     'meteor-repo/packages/meteor/debug.js',
 
-
-
     'meteor-repo/packages/base64/base64.js',
 
     'meteor-repo/packages/jason/json_native.js',
@@ -49,14 +47,14 @@ module.exports = function(grunt) {
     'meteor-repo/packages/meteor/dynamics_browser.js',
 
     'meteor-repo/packages/reactive-var/reactive-var.js',
-    'meteor-repo/packages/reactive-dict/reactive-dict.js',
+    'meteor-repo/packages/reactive-dict/reactive-dict.js'
+  ];
 
+  var testDependencies = [
     'meteor-repo/packages/tinytest/tinytest.js',
     'meteor-repo/packages/tinytest/tinytest_client.js',
     'meteor-repo/packages/minimongo/minimongo_tests.js',
-
     'test_helpers.js'
-
   ];
 
   // Project configuration.
@@ -104,7 +102,21 @@ module.exports = function(grunt) {
         files: {
           'minimongo.min.js': 'minimongo.js'
         }
+      },
+      tests: {
+        options: {
+          mangle: false,
+          compress: true,
+          preserveComments: false,
+          beautify: true
+        },
+
+        files: {
+          'minimongo-tests.js': testDependencies
+        }
       }
+
+
     },
 
     clean: {
