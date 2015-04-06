@@ -3,6 +3,7 @@ module.exports = function(grunt) {
   var sourceTag = grunt.option('meteor-version');
 
   var fileDependecies = [
+    'helper.js',
     'meteor-repo/packages/meteor/client_environment.js',
     'meteor-repo/packages/meteor/helpers.js',
     'meteor-repo/packages/meteor/setimmediate.js',
@@ -10,6 +11,8 @@ module.exports = function(grunt) {
     'meteor-repo/packages/meteor/errors.js',
     'meteor-repo/packages/meteor/fiber_stubs_client.js',
     'meteor-repo/packages/meteor/debug.js',
+
+
 
     'meteor-repo/packages/base64/base64.js',
 
@@ -36,7 +39,16 @@ module.exports = function(grunt) {
     'meteor-repo/packages/minimongo/diff.js',
     'meteor-repo/packages/minimongo/id_map.js',
     'meteor-repo/packages/minimongo/observe.js',
-    'meteor-repo/packages/minimongo/objectid.js'
+    'meteor-repo/packages/minimongo/objectid.js',
+
+    'meteor-repo/packages/meteor/dynamics_browser.js',
+
+    'meteor-repo/packages/tinytest/tinytest.js',
+    'meteor-repo/packages/tinytest/tinytest_client.js',
+    'meteor-repo/packages/minimongo/minimongo_tests.js',
+
+    'test_helpers.js'
+
   ];
 
   // Project configuration.
@@ -66,7 +78,8 @@ module.exports = function(grunt) {
         options: {
           mangle: false,
           compress: false,
-          preserveComments: true
+          preserveComments: true,
+          beautify: true
         },
 
         files: {
