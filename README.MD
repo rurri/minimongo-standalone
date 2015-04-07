@@ -1,12 +1,12 @@
-#Minimongo-Standalone
+# Minimongo-Standalone
 Minimongo javascript code released as part of Meteor version:**1.1.0.1**
 
-##Requirements
+## Requirements
 underscore, async
 
 *These are not yet part of the dependency lists*
 
-##Bower Install
+## Bower Install
 Easiest way to install is via bower:
 ```
 bower install underscore
@@ -16,12 +16,12 @@ bower install minimongo-standalone
 
 *underscore and async will be added as dependencies after more tests*
 
-##NPM Install
+## NPM Install
 To install via npm run:
 
 `npm install minimongo-standalone --save`
 
-##Manual Download
+## Manual Download
 You could also just download the minimongo.min.js, place it on your server, and reference it in your source.
 
 For browsers
@@ -29,12 +29,12 @@ For browsers
 For servers
 `require('./minimongo.min.js');`
 
-##Open Issues
-* This package now passes all of the minimongo tests as published in Meteor's package, but these need to be added to CI/build scripts.
+## Open Issues
+* This package now passes all of the minimongo tests as published in Meteor's package, but these need to be added to CI/build scripts. (Now in build scripts but still need CI integreation)
 * Code needs to be wrapped in a closure to reduce global namespace pollution. This should also just be matter of tweaking grunt settings for uglify and testing.
 * File lists of required meteor js files are hardcoded, would be nice to look at package manifests, and to dynamically generate this file list in case file dependencies are added later.
 
-##Grunt scripts
+## Grunt scripts
 Code is pulled and generated from the minimongo db package as published by meteor: https://github.com/meteor/meteor
 
 These only need to be run if you are interested in creating your extracting minimongo from meteor and generating the minimongo.js and minimongo.min.js files yourself. Otherwise it is safe to ignore the grunt scripts.
