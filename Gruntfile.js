@@ -144,14 +144,13 @@ module.exports = function(grunt) {
     testRun.run();
 
     var testCount = resultTree[0].groups[0].tests.length;
+    testCount++;
 
     var waitCount = 0;
     var testCompleteCheckInterval = setInterval(function() {
       waitCount++;
       //Wait up to 10 seconds for tests to finish.
       if (waitCount > 100 || (passedCount + failedCount == testCount)) {
-        console.log(passedCount);
-        console.log(failedCount);
         var testSummary = failedCount + ' tests failed. ' + passedCount + ' tests passed.';
         if (passedCount + failedCount != testCount) {
           grunt.fail.fatal(testSummary);
