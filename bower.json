@@ -1,6 +1,6 @@
 {
   "name": "minimongo-standalone",
-  "version": "0.0.6",
+  "version": "0.0.7",
   "authors": [
     "Rurri"
   ],
@@ -14,6 +14,10 @@
   ],
   "license": "MIT",
   "homepage": "https://github.com/rurri/minimongo-standalone",
+  "dependencies": {
+    "uderscore": ">=1.0.0",
+    "async": ">=0.1.0"
+  },
   "ignore": [
     "**/.*",
     "package.json",

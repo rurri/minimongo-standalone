@@ -1,7 +1,7 @@
 {
   "name": "minimongo-standalone",
   "description": "Standalone version of Meteor's minimongo database. Automatically fetched and built to latest and packaged for npm",
-  "version": "0.0.6",
+  "version": "0.0.7",
   "keywords": [
     "minimongo",
     "minimongodb",
@@ -20,6 +20,10 @@
   "files": [
     "minimongo.js"
   ],
+  "dependencies": {
+    "uderscore": ">=1.0.0",
+    "async": ">=0.1.0"
+  },
   "devDependencies": {
     "grunt": "~0.4.5",
     "grunt-browserify": "^3.6.0",

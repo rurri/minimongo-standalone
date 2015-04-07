@@ -1,7 +1,6 @@
 module.exports = function(grunt) {
   require('time-grunt')(grunt);
   var sourceTag = grunt.option('meteor-version');
-
   var fileDependecies = [
     'helper.js',
     'meteor-repo/packages/meteor/client_environment.js',
@@ -87,8 +86,7 @@ module.exports = function(grunt) {
           compress: false,
           preserveComments: true,
           beautify: true,
-          wrap: 'Minimongo',
-          exportAll: true,
+          wrap: 'Minimongo'
         },
 
         files: {
@@ -140,8 +138,9 @@ module.exports = function(grunt) {
   grunt.task.registerTask('runTests', 'Run tests on minimongo', function() {
     var done = this.async();
     _ = require('underscore');
-    require('./minimongo.js');
+    require('./minimongo.min.js');
     require('./minimongo-tests.js');
+
     var testRun = TestManager.createRun(reportResults);
     testRun.run();
 
