@@ -144,7 +144,6 @@ module.exports = function(grunt) {
     testRun.run();
 
     var testCount = resultTree[0].groups[0].tests.length;
-    testCount++;
 
     var waitCount = 0;
     var testCompleteCheckInterval = setInterval(function() {
@@ -153,6 +152,8 @@ module.exports = function(grunt) {
       if (waitCount > 100 || (passedCount + failedCount == testCount)) {
         var testSummary = failedCount + ' tests failed. ' + passedCount + ' tests passed.';
         if (passedCount + failedCount != testCount) {
+          grunt.fail.fatal("Not all tests completed. " + testCount + " total tests. " + testSummary);
+        } else if (failedCount) {
           grunt.fail.fatal(testSummary);
         } else {
           grunt.log.oklns(testSummary);

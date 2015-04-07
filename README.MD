@@ -27,8 +27,7 @@ For servers
 
 `require('./minimongo.min.js');`
 
-## Open Issues
-* This package now passes all of the minimongo tests as published in Meteor's package, but these need to be added to CI/build scripts. (Now in build scripts but still need CI integreation)
+## Future Enhancements
 * File lists of required meteor js files are hardcoded, would be nice to look at package manifests, and to dynamically generate this file list in case file dependencies are added later.
 
 ## Grunt scripts
