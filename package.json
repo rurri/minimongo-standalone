@@ -29,6 +29,5 @@
     "grunt-contrib-clean": ">=0.6.0",
     "grunt-git": ">=0.3.0",
     "grunt-shell": ">=1.1.2",
-    "time-grunt": ">=1.1.0"
   }
 }

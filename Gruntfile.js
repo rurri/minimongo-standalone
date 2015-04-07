@@ -1,5 +1,4 @@
 module.exports = function(grunt) {
-  require('time-grunt')(grunt);
   var sourceTag = grunt.option('meteor-version');
   var fileDependecies = [
     'helper.js',
