@@ -1,4 +1,4 @@
-# Minimongo-Standalone
+# Minimongo-Standalone [![Build Status](https://travis-ci.org/rurri/minimongo-standalone.svg?branch=master)](https://travis-ci.org/rurri/minimongo-standalone)
 Minimongo javascript code released as part of Meteor version:**1.1.0.1**
 
 ## Requirements
