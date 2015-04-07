@@ -1,1 +1,1 @@
-__meteor_runtime_config__ = {};
+var __meteor_runtime_config__ = {};

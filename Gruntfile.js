@@ -51,6 +51,7 @@ module.exports = function(grunt) {
   ];
 
   var testDependencies = [
+    'helper.js',
     'meteor-repo/packages/tinytest/tinytest.js',
     'meteor-repo/packages/tinytest/tinytest_client.js',
     'meteor-repo/packages/minimongo/minimongo_tests.js',
@@ -85,7 +86,9 @@ module.exports = function(grunt) {
           mangle: false,
           compress: false,
           preserveComments: true,
-          beautify: true
+          beautify: true,
+          wrap: 'Minimongo',
+          exportAll: true,
         },
 
         files: {
@@ -107,8 +110,10 @@ module.exports = function(grunt) {
         options: {
           mangle: false,
           compress: true,
-          preserveComments: false,
-          beautify: true
+          preserveComments: true,
+          beautify: true,
+          wrap: 'MinimongoTests',
+          exportAll: true
         },
 
         files: {
@@ -132,6 +137,35 @@ module.exports = function(grunt) {
     }
   });
 
+  grunt.task.registerTask('runTests', 'Run tests on minimongo', function() {
+    var done = this.async();
+    _ = require('underscore');
+    require('./minimongo.js');
+    require('./minimongo-tests.js');
+    var testRun = TestManager.createRun(reportResults);
+    testRun.run();
+
+    var testCount = resultTree[0].groups[0].tests.length;
+
+    var waitCount = 0;
+    var testCompleteCheckInterval = setInterval(function() {
+      waitCount++;
+      //Wait up to 10 seconds for tests to finish.
+      if (waitCount > 100 || (passedCount + failedCount == testCount)) {
+        console.log(passedCount);
+        console.log(failedCount);
+        var testSummary = failedCount + ' tests failed. ' + passedCount + ' tests passed.';
+        if (passedCount + failedCount != testCount) {
+          grunt.fail.fatal(testSummary);
+        } else {
+          grunt.log.oklns(testSummary);
+        }
+        done();
+        clearInterval(testCompleteCheckInterval);
+      }
+    }, 100);
+  });
+
   grunt.loadNpmTasks('grunt-git');
   grunt.loadNpmTasks('grunt-browserify');
   grunt.loadNpmTasks('grunt-contrib-clean');
@@ -141,6 +175,7 @@ module.exports = function(grunt) {
   grunt.registerTask('install', ['clean','gitclone', 'shell:fetch']);
   grunt.registerTask('fetch', ['checkParams', 'shell:fetch']);
   grunt.registerTask('build', ['clean:build', 'uglify']);
+  grunt.registerTask('test', ['runTests']);
 
   grunt.registerTask('default', ['checkParams', 'clean','gitclone',  'uglify']);
 };
