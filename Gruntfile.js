@@ -176,5 +176,5 @@ module.exports = function(grunt) {
   grunt.registerTask('build', ['clean:build', 'uglify']);
   grunt.registerTask('test', ['runTests']);
 
-  grunt.registerTask('default', ['checkParams', 'clean','gitclone',  'uglify']);
+  grunt.registerTask('default', ['checkParams', 'clean:build','gitclone', 'fetch', 'uglify', 'runTests']);
 };
