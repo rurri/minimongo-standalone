@@ -4,17 +4,12 @@ Minimongo javascript code released as part of Meteor version:**1.1.0.1**
 ## Requirements
 underscore, async
 
-*These are not yet part of the dependency lists*
+*These are listed as dependencies in both bower and npm and will be installed automatically
 
 ## Bower Install
 Easiest way to install is via bower:
-```
-bower install underscore
-bower install async
-bower install minimongo-standalone
-```
 
-*underscore and async will be added as dependencies after more tests*
+`bower install minimongo-standalone`
 
 ## NPM Install
 To install via npm run:
@@ -25,19 +20,21 @@ To install via npm run:
 You could also just download the minimongo.min.js, place it on your server, and reference it in your source.
 
 For browsers
+
 `<script src="/js/minimongo.min.js"></script>`
+
 For servers
+
 `require('./minimongo.min.js');`
 
 ## Open Issues
 * This package now passes all of the minimongo tests as published in Meteor's package, but these need to be added to CI/build scripts. (Now in build scripts but still need CI integreation)
-* Code needs to be wrapped in a closure to reduce global namespace pollution. This should also just be matter of tweaking grunt settings for uglify and testing.
 * File lists of required meteor js files are hardcoded, would be nice to look at package manifests, and to dynamically generate this file list in case file dependencies are added later.
 
 ## Grunt scripts
 Code is pulled and generated from the minimongo db package as published by meteor: https://github.com/meteor/meteor
 
-These only need to be run if you are interested in creating your extracting minimongo from meteor and generating the minimongo.js and minimongo.min.js files yourself. Otherwise it is safe to ignore the grunt scripts.
+These only need to be run if you are interested in extracting minimongo from meteor and generating the minimongo.js and minimongo.min.js files yourself. Otherwise it is safe to ignore the grunt scripts.
 
 2 Files are generated automatically from these grunt scripts:
 * minimongo.js - Standalone version of minimongo suitable for use on servers (or browsers during debug if size is not an issue)
@@ -65,6 +62,7 @@ Other helpful commands:
 
 |Command|Result|
 |-------|--------|
+|grunt|Performs all steps required for fetching, building, and testing the minimongo.js files from meteor|
 |grunt install|Performs just initial clone of meteor and checkouts appropriate tag for target release|
 |grunt fetch|Performs just a fetch of meteor and checkouts appropriate tag for target release|
 |grunt build|Assumes meteor is at appropriate version, and performs just build tasks uglify|
