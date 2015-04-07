@@ -37,6 +37,8 @@ For servers
 ##Grunt scripts
 Code is pulled and generated from the minimongo db package as published by meteor: https://github.com/meteor/meteor
 
+These only need to be run if you are interested in creating your extracting minimongo from meteor and generating the minimongo.js and minimongo.min.js files yourself. Otherwise it is safe to ignore the grunt scripts.
+
 2 Files are generated automatically from these grunt scripts:
 * minimongo.js - Standalone version of minimongo suitable for use on servers (or browsers during debug if size is not an issue)
 * minimongo.min.js - The above file but minified for use in browsers
