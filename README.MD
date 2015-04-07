@@ -67,5 +67,7 @@ Other helpful commands:
 |-------|--------|
 |grunt install|Performs just initial clone of meteor and checkouts appropriate tag for target release|
 |grunt fetch|Performs just a fetch of meteor and checkouts appropriate tag for target release|
-|grunt build|Assumes meteor is at appropriate version, and performs just build tasks (browserify/uglify)|
+|grunt build|Assumes meteor is at appropriate version, and performs just build tasks uglify|
+|grunt test|Assumes meteor is at appropriate version, and performs just test tasks|
+
 |grunt clean|Cleans up any files that can be rebuilt|
