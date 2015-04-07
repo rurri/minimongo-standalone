@@ -2,9 +2,7 @@
 Minimongo javascript code released as part of Meteor version:**1.1.0.1**
 
 ##Requirements
-bower install underscore
-
-bower install async
+underscore, async
 
 *These are not yet part of the dependency lists*
 
