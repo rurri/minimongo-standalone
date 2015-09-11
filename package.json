@@ -1,7 +1,7 @@
 {
   "name": "minimongo-standalone",
   "description": "Standalone version of Meteor's minimongo database. Automatically fetched and built to latest and packaged for npm",
-  "version": "0.0.9",
+  "version": "1.1.0.3",
   "keywords": [
     "minimongo",
     "minimongodb",

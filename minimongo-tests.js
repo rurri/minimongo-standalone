@@ -173,7 +173,7 @@
         //
         "throws": function(f, expected) {
             var actual, predicate;
-            if (void 0 === expected) predicate = function() {
+            if (void 0 === expected) predicate = function(actual) {
                 return !0;
             }; else if (_.isString(expected)) predicate = function(actual) {
                 return _.isString(actual.message) && -1 !== actual.message.indexOf(expected);
@@ -473,7 +473,7 @@
     // and then called with `null` when the client tests are
     // done.  This is used to provide a live display of the current
     // running client test on the test results page.
-    Tinytest._onCurrentClientTest = function() {}, // Like Tinytest._runTests, but runs the tests on both the client and
+    Tinytest._onCurrentClientTest = function(name) {}, // Like Tinytest._runTests, but runs the tests on both the client and
     // the server. Sets a 'server' flag on test results that came from the
     // server.
     //
@@ -511,7 +511,7 @@
                 msg.fields && _.has(msg.fields, "complete") && (remoteComplete = !0, handle.stop(), 
                 Meteor.call("tinytest/clearResults", runId), maybeDone()));
             }
-        }), handle = Meteor.subscribe(Meteor._ServerTestResultsSubscription, runId), Meteor.call("tinytest/run", runId, pathPrefix, function(error) {
+        }), handle = Meteor.subscribe(Meteor._ServerTestResultsSubscription, runId), Meteor.call("tinytest/run", runId, pathPrefix, function(error, result) {
             if (error) // XXX better report error
             throw new Error("Test server returned an error");
         }), serial || startLocalTests();
@@ -9682,7 +9682,7 @@
         coll.insert({
             _id: "F"
         }), test.equal(x, "EDCBA"), test.equal(y, "EDCBA");
-    }), Tinytest.add("minimongo - immediate invalidate", function() {
+    }), Tinytest.add("minimongo - immediate invalidate", function(test) {
         var coll = new LocalCollection();
         coll.insert({
             _id: "A"
@@ -9712,7 +9712,7 @@
         }), coll.insert({
             _id: "D"
         });
-        var c = Tracker.autorun(function() {
+        var c = Tracker.autorun(function(c) {
             var cursor = coll.find({
                 _id: {
                     $exists: !0
@@ -10042,7 +10042,7 @@
                 "foo.bar": 1
             }
         }).observeChanges({
-            changed: function() {
+            changed: function(id, fields) {
                 callbackInvoked = !0;
             }
         });
